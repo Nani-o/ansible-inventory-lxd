@@ -5,6 +5,8 @@ import optparse
 import json
 import subprocess
 import sys
+import os
+import lxc
 
 def execute_command(command):
     # ToDo :
@@ -28,30 +30,18 @@ def get_inventory(show_meta_hostvars):
 
     host_list[group] = {'hosts': []}
 
-    cmd = ["lxc-ls", "-f", "-F", "NAME,STATE,PID,RAM,SWAP,AUTOSTART,GROUPS,IPV4,IPV6"]
-    lxc_ls_output = execute_command(cmd)
-
-    for idx,line in enumerate(lxc_ls_output.split('\n')):
-        items = line.split()
-        if idx == 0:
-            headers = [x.lower() for x in items]
-        elif len(headers) == len(items):
-            container = {}
-            for idx,header in enumerate(headers):
-                container[header] = items[idx]
-
+    containers_path = '/sys/fs/cgroup/devices/lxc'
+    num_sep = containers_path.count(os.path.sep)
+    for dirname, dirnames, filenames in os.walk(containers_path):
+        if dirname.count(os.path.sep) - num_sep == 1:
+            container = dirname.split(os.path.sep)[-1]
+            host_list[group]['hosts'].append(container)
             if show_meta_hostvars:
-                host_list['_meta']['hostvars'][container['name']] = {
-                    "ansible_ssh_host": container['name'],
-                    "ansible_host": container['name'],
+                host_list['_meta']['hostvars'][container] = {
+                    "ansible_ssh_host": container,
+                    "ansible_host": container,
                     "ansible_connection": "lxc"
                 }
-                for header in container:
-                    if header == "name":
-                        continue
-                    host_list['_meta']['hostvars'][container['name']][header] = container[header]
-
-            host_list[group]['hosts'].append(container['name'])
 
     return host_list
 
