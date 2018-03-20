@@ -38,9 +38,7 @@ def get_inventory(show_meta_hostvars):
             host_list[group]['hosts'].append(container)
             if show_meta_hostvars:
                 host_list['_meta']['hostvars'][container] = {
-                    "ansible_ssh_host": container,
-                    "ansible_host": container,
-                    "ansible_connection": "lxc"
+                    "ansible_connection": "lxd"
                 }
 
     return host_list
