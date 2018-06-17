@@ -9,15 +9,12 @@ import os
 import lxc
 
 def execute_command(command):
-    # ToDo :
-    # Catch d'une exception si l'éxécutable n'est pas trouvé
-    # Plus gestion d'un return code différent de 0
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     result = proc.communicate()[0]
     return result
 
 def get_inventory(show_meta_hostvars):
-    group = "LXC_CONTAINERS"
+    group = "LXD_CONTAINERS"
 
     if show_meta_hostvars:
         host_list = {
@@ -43,28 +40,33 @@ def get_inventory(show_meta_hostvars):
 
     return host_list
 
+def get_host(host):
+    inventory = get_inventory(True)
+    hostvars = inventory['_meta']['hostvars']
+    if host in hostvars.keys():
+        vars = hostvars[host]
+    else:
+        vars = {}
+        
+    return vars
+
 def main():
     parser = optparse.OptionParser()
     parser.add_option('--list', action='store_true', dest='list',
-                      default=False, help='Liste les containers lxc')
-    # parser.add_option('--host', dest='host', default=None, metavar='HOST',
-    #                   help='Liste les variables pout un hote')
-
-    # Ces options ne sont pas utilisés par Ansible, uniquement si appelé depuis la CLI
+                      default=False, help='List lxd containers')
+    parser.add_option('--host', dest='host', default=None, metavar='HOST',
+                      help='List vars for an lxd container')
     parser.add_option('--pretty', action='store_true', dest='pretty',
                       default=False, help='Pretty print du JSON')
     parser.add_option('--no-meta-hostvars', action='store_false',
                       dest='meta_hostvars', default=True,
-                      help='Retire [\'_meta\'][\'hostvars\'] avec --list')
+                      help='Remove meta hostvars')
     options, args = parser.parse_args()
 
-
-    inventory = get_inventory(options.meta_hostvars)
-
-    # if options.host is not None:
-    #     inventory = "get_host(options.host)"
-    # else:
-    #     inventory = "get_inventory(options.meta_hostvars)"
+    if options.host is not None:
+        inventory = get_host(options.host)
+    else:
+        inventory = get_inventory(options.meta_hostvars)
 
     json_kwargs = {}
     if options.pretty:
