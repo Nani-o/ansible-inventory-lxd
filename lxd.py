@@ -6,7 +6,6 @@ import json
 import subprocess
 import sys
 import os
-import lxc
 
 def execute_command(command):
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -47,7 +46,7 @@ def get_host(host):
         vars = hostvars[host]
     else:
         vars = {}
-        
+
     return vars
 
 def main():
