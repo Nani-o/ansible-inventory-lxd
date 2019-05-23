@@ -26,16 +26,13 @@ def get_inventory(show_meta_hostvars):
 
     host_list[group] = {'hosts': []}
 
-    containers_path = '/sys/fs/cgroup/devices/lxc'
-    num_sep = containers_path.count(os.path.sep)
-    for dirname, dirnames, filenames in os.walk(containers_path):
-        if dirname.count(os.path.sep) - num_sep == 1:
-            container = dirname.split(os.path.sep)[-1]
-            host_list[group]['hosts'].append(container)
-            if show_meta_hostvars:
-                host_list['_meta']['hostvars'][container] = {
-                    "ansible_connection": "lxd"
-                }
+    containers_path = '/sys/fs/cgroup/devices/lxc.monitor'
+    for container in [f for f in os.listdir(containers_path) if os.path.isdir(os.path.join(containers_path, f))]:
+        host_list[group]['hosts'].append(container)
+        if show_meta_hostvars:
+            host_list['_meta']['hostvars'][container] = {
+                "ansible_connection": "lxd"
+            }
 
     return host_list
 
