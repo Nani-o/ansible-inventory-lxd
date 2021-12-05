@@ -26,13 +26,17 @@ def get_inventory(show_meta_hostvars):
 
     host_list[group] = {'hosts': []}
 
-    containers_path = '/sys/fs/cgroup/devices/lxc.monitor'
-    for container in [f for f in os.listdir(containers_path) if os.path.isdir(os.path.join(containers_path, f))]:
-        host_list[group]['hosts'].append(container)
-        if show_meta_hostvars:
-            host_list['_meta']['hostvars'][container] = {
-                "ansible_connection": "lxd"
-            }
+    lxc_command = ['lxc', '--force-local', 'list', '-c', 'n4s', '-f', 'json']
+    payload = execute_command(lxc_command)
+    containers = json.loads(payload)
+
+    for container in containers:
+        if container['state']['status'] == "Running":
+            host_list[group]['hosts'].append(container['name'])
+            if show_meta_hostvars:
+                host_list['_meta']['hostvars'][container['name']] = {
+                    "ansible_connection": "lxd"
+                }
 
     return host_list
 
